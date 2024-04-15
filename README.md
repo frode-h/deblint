@@ -6,7 +6,7 @@ Deblint uses atime to decide which packages have not been used in the set time, 
 
 ## Usage
 
-deblint <days> (default=7)
+```deblint <days> (default=7)```
 
 ## Features
 
@@ -16,8 +16,6 @@ deblint <days> (default=7)
 
 ## Recent Updates
 
-In the recent update, the following enhancements were made:
-
 - Added support for a whitelist of packages not to uninstall: You can now specify a list of packages that should not be suggested for removal, even if they are not used by any other packages.
 
 ## Whitelist
@@ -25,9 +23,11 @@ In the recent update, the following enhancements were made:
 To use the whitelist feature, create a newline-separated list of package names in a file called `/etc/deblint/whitelist`. These packages will be excluded from the list of packages suggested for removal.
 
 For example:
-/etc/deblint/whitelist:
+
+```
 init
 debian-keyring
 dns-root-data
 firmware-linux
 firmware-linux-nonfree
+```
