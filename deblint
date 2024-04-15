@@ -1,0 +1,114 @@
+import apt
+import os
+import time
+from datetime import datetime, timedelta
+import sys
+
+def get_package_files(package_name, cache):
+    """
+    Retrieve the list of installed files for a given package.
+
+    Args:
+        package_name (str): The name of the package.
+        cache (apt.Cache): The apt cache object.
+
+    Returns:
+        list: A list of installed files for the package.
+    """
+    package = cache[package_name]
+    if package and package.installed:
+        return package.installed_files
+    return []
+
+def check_inactive_packages(days, cache):
+    """
+    Identify packages where all files have not been accessed within a specified number of days.
+
+    Args:
+        days (int): Number of days to check for inactivity.
+        cache (apt.Cache): The apt cache object.
+
+    Returns:
+        list: A list of package names that have been inactive.
+    """
+    threshold_time = datetime.now() - timedelta(days=days)
+    threshold_timestamp = time.mktime(threshold_time.timetuple())
+    inactive_packages = []
+
+    for package in cache:
+        if package.is_installed:
+            files = package.installed_files
+            if files and all(os.path.getatime(file) < threshold_timestamp for file in files if os.path.exists(file)):
+                inactive_packages.append(package.name)
+
+    return inactive_packages
+
+def get_reverse_dependencies(package_name, cache):
+    """
+    Find all installed packages that depend on the given package.
+    
+    Args:
+        package_name (str): The name of the package to check.
+        cache (apt.Cache): The apt cache object.
+    
+    Returns:
+        list: A list of package names that depend on the given package.
+    """
+    reverse_deps = []
+    for pkg in cache:
+        if pkg.is_installed:
+            for dep in pkg.installed.dependencies:
+                for or_group in dep.or_dependencies:
+                    if package_name == or_group.name:
+                        reverse_deps.append(pkg.name)
+                        break
+    return reverse_deps
+
+def filter_safe_to_remove_packages(inactive_packages, cache):
+    """
+    Filter out packages that are safe to remove, checking for reverse dependencies.
+
+    Args:
+        inactive_packages (list): List of inactive packages.
+        cache (apt.Cache): The apt cache object.
+
+    Returns:
+        list: A list of package names that are safe to remove.
+    """
+    safe_to_remove = set(inactive_packages)
+
+    for package_name in inactive_packages:
+        reverse_deps = get_reverse_dependencies(package_name, cache)
+        for dep_pkg in reverse_deps:
+            if dep_pkg in safe_to_remove:
+                safe_to_remove.discard(package_name)
+                break
+
+    return list(safe_to_remove)
+
+
+
+
+def main():
+    """
+    Main function to execute the script logic. Takes command line argument for number of days of inactivity.
+    """
+    cache = apt.Cache()
+    cache.open()
+
+    days_inactive = int(sys.argv[1]) if len(sys.argv) > 1 else 7
+    inactive_packages = check_inactive_packages(days_inactive, cache)
+    safe_to_remove_packages = filter_safe_to_remove_packages(inactive_packages, cache)
+
+    if safe_to_remove_packages:
+        apt_command = "sudo apt remove " + ' '.join(safe_to_remove_packages)
+        print("Inactive packages that can be safely removed:", safe_to_remove_packages)
+        print("Command to remove these packages:", apt_command)
+
+        if input("Do you want to uninstall these packages now? (y/n) ").lower() == 'y':
+            os.system(apt_command)
+    else:
+        print("No packages are safe to remove.")
+
+if __name__ == '__main__':
+    main()
