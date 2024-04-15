@@ -1,8 +1,9 @@
-import apt
 import os
 import time
 from datetime import datetime, timedelta
 import sys
+
+import apt
 
 def get_package_files(package_name, cache):
     """
