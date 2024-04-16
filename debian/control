@@ -1,0 +1,15 @@
+Source: deblint
+Section: utils
+Priority: optional
+Maintainer: Your Name <your.email@example.com>
+Build-Depends: debhelper (>= 9)
+Standards-Version: 3.9.8
+Homepage: https://github.com/frode-h/deblint
+
+Package: deblint
+Architecture: all
+Depends: python3-regex, python3-apt
+Description: Track down unused Debian packages 
+Deblint is a tool for tracking down unused Debian packages that no other packages depend on. It's designed to help you clean up your system by identifying and removing packages that are no longer needed.
+
+Deblint uses atime to decide which packages have not been used in the set time.
