@@ -7,3 +7,6 @@ debian/deblint/DEBIAN/md5sums
 debian/deblint/usr/bin/deblint
 debian/deblint/usr/share/doc/deblint/changelog.Debian.gz
 debian/deblint/usr/share/doc/deblint/README.md
+debian/.debhelper/generated/deblint/dh_installchangelogs.dch.trimmed
+debian/.debhelper/generated/deblint/installed-by-dh_install
+debian/.debhelper/generated/deblint/installed-by-dh_installdocs
