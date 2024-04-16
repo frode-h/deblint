@@ -1,2 +1,9 @@
 .vscode/settings.json
 __pycache__/
+debian/deblint.debhelper.log
+debian/deblint.substvars
+debian/deblint/DEBIAN/control
+debian/deblint/DEBIAN/md5sums
+debian/deblint/usr/bin/deblint
+debian/deblint/usr/share/doc/deblint/changelog.Debian.gz
+debian/deblint/usr/share/doc/deblint/README.md
