@@ -8,7 +8,6 @@ import sys
 import apt
 import re
 
-whitelistfile = '/etc/deblint/whitelist'
 
 def import_package_whitelist(file_path):
     """
@@ -37,8 +36,6 @@ def import_package_whitelist(file_path):
         print(f"Warning: No valid package names found in {file_path}.")
 
     return packages
-
-whitelist = import_package_whitelist(whitelistfile)
 
 def get_package_files(package_name, cache):
     """
@@ -94,8 +91,7 @@ def get_reverse_dependencies(package_name, cache):
     for pkg in cache:
         if pkg.is_installed:
             for dep in pkg.installed.dependencies:
-                for or_group in dep.or_dependencies:
-                    if package_name == or_group.name:
+                if package_name == dep[0].name:
                         reverse_deps.append(pkg.name)
                         break
     return reverse_deps
@@ -111,16 +107,17 @@ def filter_safe_to_remove_packages(inactive_packages, cache):
     Returns:
         list: A list of package names that are safe to remove.
     """
+    whitelistfile = '/etc/deblint/whitelist'
+    whitelist = import_package_whitelist(whitelistfile)
     safe_to_remove = set(inactive_packages)
 
     for package_name in inactive_packages:
         if package_name in whitelist:
-            continue
+            safe_to_remove.discard(package_name)
         reverse_deps = get_reverse_dependencies(package_name, cache)
         for dep_pkg in reverse_deps:
-            if dep_pkg not in safe_to_remove:  # changed from safe_to_remove_packages to safe_to_remove
+            if dep_pkg not in safe_to_remove:
                 safe_to_remove.discard(package_name)
-                break
     return list(safe_to_remove)
 
 
@@ -137,7 +134,6 @@ def main():
     days_inactive = int(sys.argv[1]) if len(sys.argv) > 1 else 7
     inactive_packages = check_inactive_packages(days_inactive, cache)
     safe_to_remove_packages = filter_safe_to_remove_packages(inactive_packages, cache)
-    print("break")
     if safe_to_remove_packages:
         apt_command = "sudo apt remove " + ' '.join(safe_to_remove_packages)
         print("Inactive packages that can be safely removed have been identified.")

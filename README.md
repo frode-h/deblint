@@ -75,3 +75,12 @@ To build a Debian package of this project, follow these steps:
     ```bash
     dch -i
     ```
+
+## Testing
+
+To change the atime of the files belonging to a package 
+you can run something like this:
+```
+export DATE=$(date -d "7 days ago" +%Y%m%d%H%M)
+for file in `dpkg -L cowsay` ; do sudo touch -a -t $DATE $file; done
+```
