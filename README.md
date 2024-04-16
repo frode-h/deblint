@@ -31,3 +31,47 @@ dns-root-data
 firmware-linux
 firmware-linux-nonfree
 ```
+
+## Building a Debian Package
+
+To build a Debian package of this project, follow these steps:
+
+1. Install the necessary build dependencies:
+
+    ```bash
+    sudo apt-get install devscripts debhelper
+    ```
+
+2. Navigate to your project directory:
+
+    ```bash
+    cd /path/to/your/project
+    ```
+
+3. Create a source tarball in the parent directory of your project:
+
+    ```bash
+    tar czvf ../deblint_0.0.0.orig.tar.gz .
+    ```
+
+    Replace `0.0.0` with your actual package version.
+
+4. Build the Debian package:
+
+    ```bash
+    debuild -us -uc
+    ```
+
+    This command will create a `.deb` file in the parent directory of your project.
+
+5. To install the package, use the `dpkg` command:
+
+    ```bash
+    sudo dpkg -i ../your-package-name.deb
+    ```
+
+* To increment the version of your package, run:
+
+    ```bash
+    dch -i
+    ```
