@@ -1,0 +1,16 @@
+{
+	"name": "Debian",
+	"image": "mcr.microsoft.com/devcontainers/base:bookworm",
+	"features": {
+		"ghcr.io/wxw-matt/devcontainer-features/command_runner:0": {},
+		"ghcr.io/wxw-matt/devcontainer-features/script_runner:0": {},
+		"ghcr.io/devcontainers/features/python:1": {
+			"installTools": true,
+			"version": "os-provided"
+		}
+	},
+	"postCreateCommand":
+		"sudo apt-get update && sudo apt-get install -y python3 python3-apt && sudo apt -y install cowsay && for file in `dpkg -L cowsay` ; do sudo touch -a -t $(date -d \"7 days ago\" +%Y%m%d%H%M) $file; done"
+
+	// other fields...
+}
