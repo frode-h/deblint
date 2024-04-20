@@ -1,16 +1,17 @@
-#!/usr/bin/python3
-
 import os
 import time
 from datetime import datetime, timedelta
 import sys
-
-# Set up basic logging configuration
 import logging
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
-
 import apt
 import re
+import traceback
+#!/usr/bin/python3
+
+
+# Set up basic logging configuration
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
 
 
 def import_package_whitelist(file_path):
@@ -24,7 +25,7 @@ def import_package_whitelist(file_path):
         set: A set of package names.
     """
     if not os.path.isfile(file_path):
-        print(f"Error: File {file_path} does not exist.")
+        logging.error(f"Error: File {file_path} does not exist.")
         return set()
 
     with open(file_path, 'r') as file:
@@ -37,26 +38,9 @@ def import_package_whitelist(file_path):
     packages = {pkg for pkg in packages if pkg and pattern.match(pkg)}
 
     if not packages:
-        print(f"Warning: No valid package names found in {file_path}.")
+        logging.warning(f"No valid package names found in {file_path}.")
 
     return packages
-
-
-def get_package_files(package_name, cache):
-    """
-    Retrieve the list of installed files for a given package.
-
-    Args:
-        package_name (str): The name of the package.
-        cache (apt.Cache): The apt cache object.
-
-    Returns:
-        list: A list of installed files for the package.
-    """
-    package = cache[package_name]
-    if package and package.installed:
-        return package.installed_files
-    return []
 
 
 def check_inactive_packages(days, cache):
@@ -75,10 +59,19 @@ def check_inactive_packages(days, cache):
     inactive_packages = []
 
     for package in cache:
+        logging.debug(f"Checking package {package.name}")
         if package.is_installed:
             files = package.installed_files
-            if files and all(os.path.getatime(file) < threshold_timestamp for file in files if os.path.exists(file)):
-                inactive_packages.append(package.name)
+            logging.debug(f"Files: {files}")
+            if files:
+                logging.debug(f"Files for package {package.name}: {files}")
+                all_files_inactive = all(os.path.getatime(file) < threshold_timestamp for file in files if os.path.exists(file))
+                logging.debug(f"All files inactive: {all_files_inactive}")
+                if all_files_inactive:
+                    logging.debug(f"Adding package {package.name} to inactive_packages")
+                    inactive_packages.append(package.name)
+            # Print stack trace for this package
+            # traceback.print_stack()
 
     return inactive_packages
 
@@ -135,24 +128,26 @@ def main():
     Main function to execute the script logic. Takes command line argument for number of days of inactivity.
     """
     cache = apt.Cache()
+
     if os.geteuid() != 0:
-        print("We are not root, skipping cache update.")
-    else:
-        cache.update()
-    cache.open()
+        logging.info("We are not root, skipping cache update.")
+    #else:
+    #    cache.update()
+    #cache.open()
 
     days_inactive = int(sys.argv[1]) if len(sys.argv) > 1 else 7
     inactive_packages = check_inactive_packages(days_inactive, cache)
+    logging.debug(f"Inactive packages: {inactive_packages}")
     safe_to_remove_packages = filter_safe_to_remove_packages(inactive_packages, cache)
     if safe_to_remove_packages:
         apt_command = "sudo apt remove " + ' '.join(safe_to_remove_packages)
-        print("Inactive packages that can be safely removed have been identified.")
-        print("Command to remove these packages:", apt_command)
+        logging.info("Inactive packages that can be safely removed have been identified.")
+        logging.info("Command to remove these packages: %s", apt_command)
 
         if input("Do you want to uninstall these packages now? (y/n) ").lower() == 'y':
             os.system(apt_command)
     else:
-        print("No packages are safe to remove.")
+        logging.info("No packages are safe to remove.")
 
 
 if __name__ == '__main__':
